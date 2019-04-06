@@ -4,14 +4,17 @@ import scipy.misc
 import numpy as np
 import random
 import cv2
-import data_process
+import preprocessing
 
 
 class MPII_dataset:
 
-    def __init__(self, images_dir, annots_json_filename):
+    def __init__(self, images_dir, annots_json_filename, input_res, output_res):
         self.annots_json_filename = annots_json_filename
         self.images_dir = images_dir
+        self.input_res = input_res
+        self.output_res = output_res
+
         self.annots_train = []
         self.annots_valid = []
 
@@ -32,10 +35,14 @@ class MPII_dataset:
             json_parsed = json.loads(f.read())
 
         for index, value in enumerate(json_parsed):
-            self.annots_valid.append(value) if 'isValidation' in value else self.annots_train.append(value)
+            self.annots_valid.append(value) if value['isValidation'] == 1.0 else self.annots_train.append(value)
 
-    def create_batches(self):
-        pass
+    def create_batches(self, batch_size):
+        train_input = np.zeros(shape=(batch_size, self.input_res[0], self.input_res[1], 3))
+        heatmap_putput = np.zeros(shape=(batch_size, self.output_res[0], self.output_res[1], self.joints_num))
+
+        while True:
+            for index, value in self.an
 
     def process_image(self, annotation, flip_flag, scale_flag, rotation_flag):
         image_filename = annotation['img_paths']
@@ -50,11 +57,13 @@ class MPII_dataset:
 
         if flip_flag and random.choice([0, 1]):
             image, obj_center, obj_joints = self.flip(image, obj_center, obj_joints)
+
+        # COMMENT data ugmentation (scaling)
         if scale_flag:
-            scale *= np.random.uniform(0.8, 1.2)
+            scale *= np.random.uniform(0.75, 1.25)
+
+        # COMMENT data augmentation (rotation)
         rotation_angle = np.random.randint(-30, 30) if rotation_flag and random.choice([0, 1]) else 0
-
-
 
 
     def flip(self, image, center, joints):
