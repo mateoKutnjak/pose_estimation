@@ -5,7 +5,6 @@ import os
 import json
 import matplotlib.pyplot as plt
 import cv2
-import math
 
 
 IMAGE_DIR = 'images/'
@@ -27,89 +26,64 @@ def process_image(annotation, flip_flag, scale_flag, rotation_flag):
 
     obj_center = np.array(annotation['objpos'])
     obj_joints = np.array(annotation['joint_self'])
+    obj_joint_visibility = obj_joints[:, 2]
+    obj_joints = obj_joints[:, :2]
     scale = annotation['scale_provided']
 
     # COMMENT To avoid joints cropping
     scale *= 1.25
+    angle = 0
 
     # if flip_flag and np.random.sample() > 0.5:
     #     image, obj_center, obj_joints = flip(image, obj_center, obj_joints)
     # if scale_flag and np.random.sample() > 0.5:
     #     scale *= np.random.uniform(0.75, 1.25)
-    # if rotation_flag and np.random.sample() > 0.5:
-    #     image, obj_center, obj_joints = rotate(image, obj_center, obj_joints)
+    if rotation_flag and np.random.sample() > 0.0:
+        angle = np.random.randint(-30, 30)
+        image, obj_center, obj_joints = rotate(image, obj_center, obj_joints, angle)
 
+    draw_processed_image(image, obj_center, obj_joints, scale, angle)
+
+    cropped_image, obj_center, obj_joints = crop(image, obj_center, obj_joints, scale)
+
+    draw_processed_image(cropped_image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+
+def draw_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=True):
     x0 = int(obj_center[0] - 200 * scale / 2)
     y0 = int(obj_center[1] - 200 * scale / 2)
     x1 = int(obj_center[0] + 200 * scale / 2)
     y1 = int(obj_center[1] + 200 * scale / 2)
 
     plt.imshow(image)
-    plt.scatter(obj_center[0], obj_center[1])
-    plt.plot([x0, x1], [y0, y0])
-    plt.plot([x0, x1], [y1, y1])
-    plt.plot([x0, x0], [y0, y1])
-    plt.plot([x1, x1], [y0, y1])
+
+    plt.scatter(obj_center[0], obj_center[1], c='r')
+
+    if draw_bbox:
+        plt.plot([x0, x1], [y0, y0], c='b')
+        plt.plot([x0, x1], [y1, y1], c='b')
+        plt.plot([x0, x0], [y0, y1], c='b')
+        plt.plot([x1, x1], [y0, y1], c='b')
+
+    plt.title('Scale = {}\nAngle = {}'.format(scale, angle))
+
+    for joint in obj_joints:
+        plt.scatter(joint[0], joint[1], c='g')
+
     plt.show()
-
-
-
-    image, obj_center, obj_joints = rotate(image, obj_center, obj_joints, 30)
-
-
-    x0 = int(obj_center[0] - 200 * scale / 2)
-    y0 = int(obj_center[1] - 200 * scale / 2)
-    x1 = int(obj_center[0] + 200 * scale / 2)
-    y1 = int(obj_center[1] + 200 * scale / 2)
-
-    plt.imshow(image)
-    plt.scatter(obj_center[0], obj_center[1])
-    plt.plot([x0, x1], [y0, y0])
-    plt.plot([x0, x1], [y1, y1])
-    plt.plot([x0, x0], [y0, y1])
-    plt.plot([x1, x1], [y0, y1])
-    plt.show()
-
-    image = crop(image, x0, y0, x1, y1)
-
-    plt.imshow(image)
-    plt.scatter(image.shape[0] // 2, image.shape[1] // 2)
-    plt.show()
-
-    exit()
-
-    if flip_flag:
-        image, obj_center, obj_joints = flip(image, obj_center, obj_joints)
-
-    # COMMENT data augmentation (scaling)
-    if scale_flag:
-        scale *= np.random.uniform(0.75, 1.25)
-
-    # COMMENT data augmentation (rotation)
-    # rotation_angle = np.random.randint(-30, 30) if rotation_flag and np.random.sample() > 0.5 else 0
-    rotation_angle = 30
-
-    image = rotate(image, 30)
-
-    draw_with_joints(image, obj_joints)
-
 
 def rotate(image, obj_center, obj_joints, angle):
     rotated_image = rot(image, angle)
     rotation_origin = (image.shape[0] // 2, image.shape[1] // 2)
 
-    joint_visibility = obj_joints[:, 2]
-    obj_joints = obj_joints[:, :2]
-
-    points = [obj_center]
-    points.extend(obj_joints)
-    points = np.array(points)
+    points = np.copy(obj_center)
+    points = points.reshape(-1, 2)
+    points = np.append(points, obj_joints, axis=0)
     points = np.append(points, np.ones(shape=(len(points), 1)), axis=1)
 
     rotated_points = rotate_points(points, rotation_origin[1], rotation_origin[0], angle, image.shape[0], image.shape[1])
 
     rotated_center = rotated_points[0]
-    rotated_joints = rotated_points[:, 1:]
+    rotated_joints = rotated_points[1:, :]
 
     return rotated_image, rotated_center, rotated_joints
 # TODO joint visibility
@@ -126,34 +100,24 @@ def rotate_points(points, cx, cy, angle, h, w):
     M[0, 2] += (nW / 2) - cx
     M[1, 2] += (nH / 2) - cy
 
-    import pdb
-    pdb.set_trace()
-
-    calculated = np.dot(M, np.array(points).T).T
-    calculated = calculated.reshape(-1, 17)
-
+    calculated = np.dot(points, M.T)
     return calculated
 
-    # ox, oy = origin
-    # angle = np.radians(angle)
-    #
-    # if len(point) == 2:
-    #     px, py = point
-    #
-    #     qx = ox + np.cos(angle) * (px - ox) - np.sin(angle) * (py - oy)
-    #     qy = oy + np.sin(angle) * (px - ox) + np.cos(angle) * (py - oy)
-    #     return [qx, qy]
-    # else:
-    #     px, py, pz = point
-    #
-    #     qx = ox + np.cos(angle) * (px - ox) - np.sin(angle) * (py - oy)
-    #     qy = oy + np.sin(angle) * (px - ox) + np.cos(angle) * (py - oy)
-    #     return [qx, qy, pz]
+def crop(img, obj_center, obj_joints, scale):
+    x0 = int(obj_center[0] - 200 * scale / 2)
+    y0 = int(obj_center[1] - 200 * scale / 2)
+    x1 = int(obj_center[0] + 200 * scale / 2)
+    y1 = int(obj_center[1] + 200 * scale / 2)
 
-def crop(img, x0, y0, x1, y1):
     if x0 < 0 or y0 < 0 or x1 > img.shape[1] or y1 > img.shape[0]:
         img, x0, y0, x1, y1 = pad_image(img, x0, y0, x1, y1)
-    return img[y0:y1, x0:x1, :]
+
+    obj_center[0] -= x0
+    obj_center[1] -= y0
+    obj_joints[:, 0] -= x0
+    obj_joints[:, 1] -= y0
+
+    return img[y0:y1, x0:x1, :], obj_center, obj_joints
 
 def pad_image(img, x0, y0, x1, y1):
     img = np.pad(img,
@@ -180,23 +144,14 @@ def flip(image, center, joints):
     flipped_joints[:, 0] = im_width - joints[:, 0] # COMMENT mirrors joints x coordinates
 
     for joint_pair in joint_pairs:
-        temp = joints[joint_pair[0], :]
+        temp = np.copy(flipped_joints[joint_pair[0], :])
         flipped_joints[joint_pair[0], :] = flipped_joints[joint_pair[1], :]
         flipped_joints[joint_pair[1], :] = temp
 
-    flipped_center = center
+    flipped_center = np.copy(center)
     flipped_center[0] = im_width - center[0]
 
     return flipped_image, flipped_center, flipped_joints
-
-
-def draw_with_joints(image, joints):
-    plt.imshow(image)
-
-    for joint in joints:
-        plt.scatter(joint[0], joint[1])
-
-    plt.show()
 
 
 annots_train = []

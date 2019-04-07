@@ -2,8 +2,9 @@ import os
 import json
 import scipy.misc
 import numpy as np
-import random
 import cv2
+import matplotlib.pyplot as plt
+from scipy.ndimage import rotate as rot
 import preprocessing
 
 
@@ -28,8 +29,6 @@ class MPII_dataset:
             [12, 13]    # COMMENT shoulders
         )
 
-        self.create_dataset()
-
     def create_dataset(self):
         with open(self.annots_json_filename) as f:
             json_parsed = json.loads(f.read())
@@ -37,12 +36,12 @@ class MPII_dataset:
         for index, value in enumerate(json_parsed):
             self.annots_valid.append(value) if value['isValidation'] == 1.0 else self.annots_train.append(value)
 
-    def create_batches(self, batch_size):
-        train_input = np.zeros(shape=(batch_size, self.input_res[0], self.input_res[1], 3))
-        heatmap_putput = np.zeros(shape=(batch_size, self.output_res[0], self.output_res[1], self.joints_num))
-
-        while True:
-            for index, value in self.an
+    # def create_batches(self, batch_size):
+    #     train_input = np.zeros(shape=(batch_size, self.input_res[0], self.input_res[1], 3))
+    #     heatmap_putput = np.zeros(shape=(batch_size, self.output_res[0], self.output_res[1], self.joints_num))
+    #
+    #     while True:
+    #         for index, value in self.an
 
     def process_image(self, annotation, flip_flag, scale_flag, rotation_flag):
         image_filename = annotation['img_paths']
@@ -50,37 +49,24 @@ class MPII_dataset:
 
         obj_center = np.array(annotation['objpos'])
         obj_joints = np.array(annotation['joint_self'])
+        obj_joint_visibility = obj_joints[:, 2]
+        obj_joints = obj_joints[:, :2]
         scale = annotation['scale_provided']
 
-        obj_center[1] += 15 * scale
+        # COMMENT To avoid joints cropping
         scale *= 1.25
+        angle = 0
 
-        if flip_flag and random.choice([0, 1]):
-            image, obj_center, obj_joints = self.flip(image, obj_center, obj_joints)
-
-        # COMMENT data ugmentation (scaling)
-        if scale_flag:
+        if flip_flag and np.random.sample() > 0.5:
+            image, obj_center, obj_joints = preprocessing.flip(image, obj_center, obj_joints)
+        if scale_flag and np.random.sample() > 0.5:
             scale *= np.random.uniform(0.75, 1.25)
+        if rotation_flag and np.random.sample() > 0.5:
+            angle = np.random.randint(-30, 30)
+            image, obj_center, obj_joints = preprocessing.rotate(image, obj_center, obj_joints, angle)
 
-        # COMMENT data augmentation (rotation)
-        rotation_angle = np.random.randint(-30, 30) if rotation_flag and random.choice([0, 1]) else 0
+        preprocessing.draw_processed_image(image, obj_center, obj_joints, scale, angle)
 
+        cropped_image, obj_center, obj_joints = preprocessing.crop(image, obj_center, obj_joints, scale)
 
-    def flip(self, image, center, joints):
-        flipped_joints = np.copy(joints)
-
-        im_height, im_width, im_channels = image.shape
-
-        flipped_image = cv2.flip(image, flipCode=1) # COMMENT mirrors image x coordinates
-        flipped_joints[:, 0] = im_width - joints[:, 0] # COMMENT mirrors joints x coordinates
-
-        for joint_pair in self.joint_pairs:
-            temp = joints[joint_pair[0], :]
-            flipped_joints[joint_pair[0], :] = flipped_joints[joint_pair[1], :]
-            flipped_joints[joint_pair[1], :] = temp
-
-        flipped_center = center
-        flipped_center[0] = im_width - center[0]
-
-        return flipped_image, flipped_center, flipped_joints
-
+        preprocessing.draw_processed_image(cropped_image, obj_center, obj_joints, scale, angle, draw_bbox=False)
