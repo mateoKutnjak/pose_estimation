@@ -4,8 +4,8 @@ from keras.optimizers import RMSprop
 from keras.losses import mean_squared_error
 
 
-def create_network(input_shape, channels, classes, stacks=1):
-    input = Input(shape=(input_shape[0], input_shape[1], input_shape[2]))
+def create_network(input_shape, batch_size, channels, classes, stacks=1):
+    input = Input(shape=input_shape, batch_shape=batch_size)
 
     curr_output = create_front_module(input, channels)
     heatmaps = []
