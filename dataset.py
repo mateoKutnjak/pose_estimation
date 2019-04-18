@@ -9,14 +9,14 @@ from random import shuffle
 
 class MPII_dataset:
 
-    def __init__(self, images_dir, annots_json_filename, input_shape, output_shape):
+    def __init__(self, images_dir, annots_json_filename, input_shape, output_shape, type='train'):
         self.annots_json_filename = annots_json_filename
         self.images_dir = images_dir
         self.input_shape = input_shape
         self.output_shape = output_shape
+        self.type = type
 
-        self.annots_train = []
-        self.annots_valid = []
+        self.annots = []
 
         self.joints_num = 16
         self.joint_pairs = (
@@ -41,7 +41,8 @@ class MPII_dataset:
             json_parsed = json.loads(f.read())
 
         for index, value in enumerate(json_parsed):
-            self.annots_valid.append(value) if value['isValidation'] == 1.0 else self.annots_train.append(value)
+            if value['isValidation'] == 1.0 and self.type == 'valid' or value['isValidation']  == 0.0 and self.type == 'train':
+                self.annots.append(value)
 
     def get_input_shape(self):
         return self.input_shape
@@ -49,40 +50,47 @@ class MPII_dataset:
     def get_output_shape(self):
         return self.output_shape
 
+    def get_dataset_size(self):
+        return len(self.annots)
+
     # TODO shuffle
-    def create_batches(self, batch_size, dataset_type='train'):
+    def generate_batches(self, batch_size, stacks_num, metadata_flag=False):
         input_batch = np.zeros(shape=(batch_size,) + self.input_shape)
         output_batch = np.zeros(shape=(batch_size,) + self.output_shape)
-
-        dataset = None
-
-        if dataset_type == 'train':
-            dataset = self.annots_train
-        elif dataset_type == 'valid':
-            dataset = self.annots_valid
+        metadatas = []
 
         while True:
-            shuffle(dataset)
-            for index, annotation in enumerate(dataset):
-                input_image, output_labelmaps = self.process_image(
+            shuffle(self.annots)
+            for index, annotation in enumerate(self.annots):
+                input_image, output_labelmaps, metadata = self.process_image(
                     annotation=annotation,
                     flip_flag=True,
                     scale_flag=True,
-                    rotation_flag=True
+                    rotation_flag=True,
+                    metadata_flag=True
                 )
 
                 batch_index = index % batch_size
 
                 input_batch[batch_index, :, :, :] = input_image
                 output_batch[batch_index, :, :, :] = output_labelmaps
+                metadatas.append(metadata)
 
                 if batch_index == batch_size-1:
-                    # yield input_batch, output_batch
-                    return input_batch, output_batch
+                    output_batch_total = []
+                    _metadatas = metadata.copy()
+
+                    for _ in range(stacks_num):
+                        output_batch_total.append(output_batch)
+
+                    if metadata_flag:
+                        yield input_batch, output_batch_total, metadatas
+                    else:
+                        yield input_batch, output_batch_total
 
     # TODO send original non modified imaga and create one image as data augmentation
     # COMMENT now it is only data augmentation with random modifications
-    def process_image(self, annotation, flip_flag, scale_flag, rotation_flag, sigma=1):
+    def process_image(self, annotation, flip_flag, scale_flag, rotation_flag, metadata_flag=False, sigma=1):
         image_filename = annotation['img_paths']
         image = scipy.misc.imread(os.path.join(self.images_dir, image_filename))
 
@@ -114,7 +122,7 @@ class MPII_dataset:
                 angle=angle
             )
 
-        preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
+        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
 
         image, obj_center, obj_joints = preprocessing.crop(
             original_image=image,
@@ -123,7 +131,7 @@ class MPII_dataset:
             scale=scale
         )
 
-        preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
+        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
 
         image, obj_center, obj_joints = preprocessing.resize(
             original_image=image,
@@ -132,11 +140,11 @@ class MPII_dataset:
             shape=self.input_shape[:-1]
         )
 
-        preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
 
         image = self.normalize(original_image=image)
 
-        preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
 
         labelmap_joints = preprocessing.scale_points(
             input_res=image.shape[:-1],
@@ -149,8 +157,21 @@ class MPII_dataset:
             obj_joints_visibilities=obj_joints_visibilities,
             sigma=sigma)
 
-        preprocessing.plot_labelmaps(image, obj_joints, labelmaps, labelmap_joints)
-        return image, labelmaps
+        # preprocessing.plot_labelmaps(image, obj_joints, labelmaps, labelmap_joints)
+
+        metadata = {
+            'obj_center': obj_center,
+            # 'obj_joints': np.hstack((obj_joints, np.reshape(obj_joints_visibilities, (obj_joints_visibilities.shape[0], 1)))),
+            'obj_joints': obj_joints,
+            'obj_joints_visibilities': obj_joints_visibilities,
+            'scale': scale,
+            'image_filename': image_filename
+        }
+
+        if not metadata_flag:
+            return image, labelmaps
+        else:
+            return image, labelmaps, metadata
 
     def normalize(self, original_image):
         original_image = np.divide(original_image, 255.0)

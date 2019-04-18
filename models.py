@@ -1,4 +1,5 @@
 import layers
+from eval_callback import EvalCallback
 
 
 class HourglassModel:
@@ -21,4 +22,25 @@ class HourglassModel:
             stacks=self.stacks_num
         )
 
-        self.model.summary()
+        # self.model.summary()
+
+    def train(self, epochs):
+        train_generator = self.dataset.generate_batches(
+            batch_size=self.batch_size,
+            stacks_num=self.stacks_num,
+        )
+
+        checkpoint = EvalCallback(
+            save_dir='validation',
+            batch_size=self.batch_size,
+            stacks_num=self.stacks_num,
+            input_shape=self.dataset.get_input_shape(),
+            output_shape=self.dataset.get_output_shape()
+        )
+
+        self.model.fit_generator(
+            generator=train_generator,
+            steps_per_epoch=self.dataset.get_dataset_size() // self.batch_size,
+            epochs=epochs,
+            callbacks=[checkpoint]
+        )
