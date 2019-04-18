@@ -1,7 +1,7 @@
-from keras.layers import *
-from keras.models import Model
-from keras.optimizers import RMSprop
-from keras.losses import mean_squared_error
+from tensorflow.python.keras.layers import *
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.optimizers import RMSprop
+from tensorflow.python.keras.losses import mean_squared_error
 
 
 def create_network(input_shape, batch_size, channels, classes, stacks=1):
