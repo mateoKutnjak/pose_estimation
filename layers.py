@@ -1,6 +1,6 @@
 from tensorflow.python.keras.layers import *
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.optimizers import RMSprop
+from tensorflow.python.training.rmsprop import RMSPropOptimizer
 from tensorflow.python.keras.losses import mean_squared_error
 
 
@@ -16,7 +16,7 @@ def create_network(input_shape, batch_size, channels, classes, stacks=1):
 
     model = Model(inputs=input, outputs=heatmaps)
     # TODO On keras github 5e-4
-    rms = RMSprop(lr=2.5e-4)
+    rms = RMSPropOptimizer(learning_rate=2.5e-4)
     model.compile(optimizer=rms, loss=mean_squared_error, metrics=["accuracy"])
 
     return model
