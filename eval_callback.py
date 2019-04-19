@@ -6,8 +6,10 @@ import eval_utils
 
 class EvalCallback(Callback):
 
-    def __init__(self, save_dir, batch_size, stacks_num, input_shape, output_shape):
-        self.save_dir = save_dir
+    def __init__(self, images_dir, annotations_json_file, log_dir, batch_size, stacks_num, input_shape, output_shape):
+        self.images_dir = images_dir
+        self.annotations_json_file = annotations_json_file
+        self.log_dir = log_dir
         self.batch_size = batch_size
         self.stacks_num = stacks_num
         self.input_shape = input_shape
@@ -25,14 +27,14 @@ class EvalCallback(Callback):
 
         accuracy = self.epoch_evaluation(epoch)
 
-        with open(os.path.join(self.save_dir, 'epoch_validations.txt'), 'a+') as f:
+        with open(os.path.join(self.log_dir, 'epoch_validations.txt'), 'a+') as f:
             f.write('Epoch ' + str(epoch) + ' with accuracy of ' + str(accuracy) + '\n')
 
 
     def epoch_evaluation(self, epoch):
         mpii_valid_dataset = MPII_dataset(
-            images_dir='_images',
-            annots_json_filename='_annotations/annotations.json',
+            images_dir=self.images_dir,
+            annots_json_filename=self.annotations_json_file,
             input_shape=self.input_shape,
             output_shape=self.output_shape,
             type='valid'

@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--images_path', type=str, default='_images/', help='path to images data')
     parser.add_argument('--annots_path', type=str, default='_annotations/annotations.json', help='path to annotations data')
+    parser.add_argument('--log_dir', type=str, default='logs', help='path to logs')
     parser.add_argument('--input_shape', type=int, nargs=3, default=(256, 256, 3), help='input data shape')
     parser.add_argument('--output_shape', type=int, nargs=3, default=(64, 64, 16), help='output data shape')
 
@@ -29,10 +30,6 @@ def main():
         type='train'
     )
 
-    # for input_batch, output_batch in mpii_dataset.create_batches(batch_size=BATCH_SIZE):
-    #     import pdb
-    #     pdb.set_trace()
-
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 1.0
@@ -41,6 +38,9 @@ def main():
 
     hg_model = HourglassModel(
         dataset=mpii_train_dataset,
+        images_dir=args.images_path,
+        annotations_json_file=args.annots_path,
+        log_dir=args.log_dir,
         batch_size=args.batch_size,
         stacks_num=args.num_stacks,
     )

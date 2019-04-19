@@ -1,0 +1,1 @@
+Epoch 0 with accuracy of 0.0
