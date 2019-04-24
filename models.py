@@ -73,7 +73,7 @@ class HourglassModel:
 
         self.model.fit_generator(
             generator=train_generator,
-            steps_per_epoch=math.ceil(train_dataset.get_dataset_size() // self.batch_size),
+            steps_per_epoch=int(math.ceil(train_dataset.get_dataset_size() // self.batch_size)),
             epochs=epochs,
             callbacks=[checkpoint, logger]
         )
@@ -112,7 +112,7 @@ class HourglassModel:
 
         self.model.fit_generator(
             generator=train_generator,
-            steps_per_epoch=math.ceil(train_dataset.get_dataset_size() // self.batch_size),
+            steps_per_epoch=int(math.ceil(train_dataset.get_dataset_size() // self.batch_size)),
             epochs=epochs,
             callbacks=[checkpoint, logger],
             initial_epoch=checkpoint_epoch
