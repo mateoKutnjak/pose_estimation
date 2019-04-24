@@ -4,6 +4,13 @@ from tensorflow.python.training.rmsprop import RMSPropOptimizer
 from tensorflow.python.keras.losses import mean_squared_error
 
 
+def compile_model(model):
+    rms = RMSPropOptimizer(learning_rate=5e-4)
+    model.compile(optimizer=rms, loss=mean_squared_error, metrics=["accuracy"])
+
+    return model
+
+
 def create_network(input_shape, batch_size, channels, classes, stacks=1):
     input = Input(shape=(input_shape[0], input_shape[1], 3,))
 

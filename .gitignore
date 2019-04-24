@@ -124,6 +124,9 @@ dmypy.json
 
 images/*
 _images/*
+_annotations/*
+annotations/*
+logs/*
 
 .DS_Store
 .idea/*

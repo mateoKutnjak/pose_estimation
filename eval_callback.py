@@ -16,22 +16,26 @@ class EvalCallback(Callback):
         self.output_shape = output_shape
 
 
-    def on_epoch_end(self, epoch, logs={}):
-        # if epoch == 0:
-        #     jsonfile = os.path.join(self.save_dir, "architecture.json")
-        #     with open(jsonfile, "w") as f:
-        #         f.write(self.model.as_json())
-        #
-        # model_path = os.path.join(self.save_dir, "weights_" + str(epoch) + ".h5")
-        # self.model.save_weights(model_path)
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch == 0:
+            print('Saving model architecture... ', end='')
+            self.model.save(os.path.join(self.log_dir, "model_architecture.h5"))
+            print('DONE')
 
-        accuracy = self.epoch_evaluation(epoch)
+        print('Saving model weights... ', end='')
+        self.model.save_weights(os.path.join(self.log_dir, "model_weights.h5"))
+        print('DONE')
+
+        accuracy = self.epoch_evaluation()
 
         with open(os.path.join(self.log_dir, 'epoch_validations.txt'), 'a+') as f:
             f.write('Epoch ' + str(epoch) + ' with accuracy of ' + str(accuracy) + '\n')
 
+        print('Epoch ended, calculating validation accuracy and writing logs... ', end='')
+        print('DONE')
 
-    def epoch_evaluation(self, epoch):
+
+    def epoch_evaluation(self):
         mpii_valid_dataset = MPII_dataset(
             images_dir=self.images_dir,
             annots_json_filename=self.annotations_json_file,
