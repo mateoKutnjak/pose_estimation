@@ -34,7 +34,7 @@ class MPII_dataset:
         assert (input_shape[-1], 3, "Input channels dimension must be three (RGB image)")
         assert (output_shape[-1], self.joints_num, "Output channels dimension must be same as joints number")
 
-        print('Reading annotations for {} type... '.format(type), end='')
+        print('Reading annotations for {} type...'.format(type))
         self.create_dataset()
         print('DONE')
 

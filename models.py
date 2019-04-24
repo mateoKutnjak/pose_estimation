@@ -26,7 +26,7 @@ class HourglassModel:
         self.model = None
 
     def build(self):
-        print('Building model...', end='')
+        print('Building model... ')
         self.model = layers.create_network(
             input_shape=self.input_shape,
             batch_size=self.batch_size,

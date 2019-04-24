@@ -18,11 +18,11 @@ class EvalCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         if epoch == 0:
-            print('Saving model architecture... ', end='')
+            print('Saving model architecture... ')
             self.model.save(os.path.join(self.log_dir, "model_architecture.h5"))
             print('DONE')
 
-        print('Saving model weights... ', end='')
+        print('Saving model weights... ')
         self.model.save_weights(os.path.join(self.log_dir, "model_weights.h5"))
         print('DONE')
 
@@ -31,7 +31,7 @@ class EvalCallback(Callback):
         with open(os.path.join(self.log_dir, 'epoch_validations.txt'), 'a+') as f:
             f.write('Epoch ' + str(epoch) + ' with accuracy of ' + str(accuracy) + '\n')
 
-        print('Epoch ended, calculating validation accuracy and writing logs... ', end='')
+        print('Epoch ended, calculating validation accuracy and writing logs... ')
         print('DONE')
 
 
