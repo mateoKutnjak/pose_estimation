@@ -62,8 +62,14 @@ class HourglassModel:
             output_shape=train_dataset.get_output_shape()
         )
 
+        logger_filepath = os.path.join(self.log_dir,
+                                       "csv_train_" + str(datetime.datetime.now().strftime('%H:%M')) + ".csv")
+
+        if not os.path.exists(logger_filepath):
+            open(logger_filepath, "w").close()
+
         logger = CSVLogger(
-            os.path.join(self.log_dir, "csv_train_" + str(datetime.datetime.now().strftime('%H:%M')) + ".csv"))
+            os.path.join(self.log_dir, logger_filepath))
 
         self.model.fit_generator(
             generator=train_generator,
