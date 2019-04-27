@@ -38,9 +38,6 @@ def main():
         output_shape=args.output_shape,
     )
 
-    import pdb
-    pdb.set_trace()
-
     if args.checkpoint_epoch is None:
         hg_model.build()
         hg_model.train(epochs=args.epochs)

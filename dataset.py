@@ -9,12 +9,13 @@ from random import shuffle
 
 class MPII_dataset:
 
-    def __init__(self, images_dir, annots_json_filename, input_shape, output_shape, type='train'):
+    def __init__(self, images_dir, annots_json_filename, input_shape, output_shape, type='train', sigma=1):
         self.annots_json_filename = annots_json_filename
         self.images_dir = images_dir
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.type = type
+        self.sigma = sigma
 
         self.annots = []
 
@@ -62,7 +63,9 @@ class MPII_dataset:
         metadatas = []
 
         while True:
-            shuffle(self.annots)
+            if self.type == 'train':
+                shuffle(self.annots)
+
             for index, annotation in enumerate(self.annots):
                 input_image, output_labelmaps, metadata = self.process_image(
                     annotation=annotation,
@@ -92,7 +95,7 @@ class MPII_dataset:
 
     # TODO send original non modified imaga and create one image as data augmentation
     # COMMENT now it is only data augmentation with random modifications
-    def process_image(self, annotation, flip_flag, scale_flag, rotation_flag, metadata_flag=False, sigma=1):
+    def process_image(self, annotation, flip_flag, scale_flag, rotation_flag, metadata_flag=False):
         image_filename = annotation['img_paths']
         image = scipy.misc.imread(os.path.join(self.images_dir, image_filename))
 
@@ -157,7 +160,7 @@ class MPII_dataset:
         labelmaps = self.generate_labelmaps(
             obj_joints=labelmap_joints,
             obj_joints_visibilities=obj_joints_visibilities,
-            sigma=sigma)
+            sigma=self.sigma)
 
         # preprocessing.plot_labelmaps(image, obj_joints, labelmaps, labelmap_joints)
 

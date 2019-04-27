@@ -22,19 +22,17 @@ def heatmap_accuracy(heatmap, metadata, norm, threshold):
     correct_pred, wrong_pred = 0, 0
 
     for i in range(labeled_joints.shape[0]):
-        within_threshold = joints_distance(
+        distance = joints_distance(
             predicted_joints[i, :],
             labeled_joints[i, :],
             norm,
             threshold
         )
 
-        if within_threshold is None: continue
-
-        if within_threshold:
-            correct_pred += 1
-        else:
+        if distance == 0:
             wrong_pred += 1
+        elif distance == 1:
+            correct_pred += 1
 
     return correct_pred, wrong_pred
 
@@ -50,7 +48,7 @@ def find_heatmap_joints(heatmap, threshold):
         y, x = np.where(peaks == peaks.max())
 
         if len(x) > 0 and len(y) > 0:
-            joints_positions.append( (int(x[0]), int(y[0]), peaks[x[0], y[0]]) )
+            joints_positions.append( (int(x[0]), int(y[0]), peaks[y[0], x[0]]) )
         else:
             joints_positions.append( (0, 0, 0) )
     return np.array(joints_positions)
@@ -64,6 +62,9 @@ def non_max_suppression(heatmap_layer, window_size=3, threshold=1e-6):
 
 def joints_distance(predicted_joint, labeled_joint, norm, threshold):
     if labeled_joint[0] > 1 and labeled_joint[1] > 1:
-        distance = np.linalg.norm(predicted_joint[0:2] - labeled_joint[0:2]) / norm
-        return distance < threshold
-    return None
+        distance = np.linalg.norm(labeled_joint[0:2] - predicted_joint[0:2]) / norm
+        if distance < threshold:
+            return 1
+        else:
+            return 0
+    return -1

@@ -41,7 +41,8 @@ class EvalCallback(Callback):
             annots_json_filename=self.annotations_json_file,
             input_shape=self.input_shape,
             output_shape=self.output_shape,
-            type='valid'
+            type='valid',
+            sigma=2,
         )
 
         total_correct, total_incorrect = 0.0, 0.0

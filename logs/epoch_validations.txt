@@ -9,3 +9,7 @@ Epoch 6 with accuracy of 0.0
 Epoch 7 with accuracy of 0.0
 Epoch 8 with accuracy of 0.0
 Epoch 9 with accuracy of 0.0
+Epoch 0 with accuracy of 0.0
+Epoch 1 with accuracy of 0.0
+Epoch 2 with accuracy of 0.0
+Epoch 3 with accuracy of 0.0
