@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import scipy.misc
 import numpy as np
 import cv2
@@ -67,6 +68,8 @@ class MPII_dataset:
                 shuffle(self.annots)
 
             for index, annotation in enumerate(self.annots):
+                batch_index = index % batch_size
+
                 input_image, output_labelmaps, metadata = self.process_image(
                     annotation=annotation,
                     flip_flag=True,
@@ -74,8 +77,6 @@ class MPII_dataset:
                     rotation_flag=True,
                     metadata_flag=True
                 )
-
-                batch_index = index % batch_size
 
                 input_batch[batch_index, :, :, :] = input_image
                 output_batch[batch_index, :, :, :] = output_labelmaps
@@ -97,7 +98,11 @@ class MPII_dataset:
     # COMMENT now it is only data augmentation with random modifications
     def process_image(self, annotation, flip_flag, scale_flag, rotation_flag, metadata_flag=False):
         image_filename = annotation['img_paths']
-        image = scipy.misc.imread(os.path.join(self.images_dir, image_filename))
+
+        filename_search = re.search('(\d\d).jpg$', image_filename, re.IGNORECASE)
+        image_last_digits = filename_search.group(1)
+
+        image = scipy.misc.imread(os.path.join(self.images_dir, '_' + str(image_last_digits), image_filename))
 
         obj_center = np.array(annotation['objpos'])
         obj_joints = np.array(annotation['joint_self'])
