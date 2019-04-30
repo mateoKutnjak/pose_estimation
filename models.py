@@ -67,7 +67,7 @@ class HourglassModel:
         if not os.path.exists(logger_filepath):
             open(logger_filepath, "w").close()
 
-        logger = CSVLogger(logger_filepath)
+        logger = CSVLogger(logger_filepath, append=True)
 
         self.model.fit_generator(
             generator=train_generator,
@@ -106,7 +106,9 @@ class HourglassModel:
         )
 
         logger = CSVLogger(
-            os.path.join(self.log_dir, "csv_train.csv"))
+            os.path.join(self.log_dir, "csv_train.csv"),
+            append=True
+        )
 
         self.model.fit_generator(
             generator=train_generator,
