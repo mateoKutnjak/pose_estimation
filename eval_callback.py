@@ -72,4 +72,6 @@ class EvalCallback(Callback):
             total_correct += corrects
             total_incorrect += incorrects
 
+        if total_correct + total_incorrect == 0.0:
+            return 0.0
         return total_correct / (total_correct + total_incorrect)
