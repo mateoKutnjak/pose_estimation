@@ -9,7 +9,7 @@ def plot_labelmaps(original_image, original_joints, labelmaps, labelmap_joints):
     for i in range(0, 4):
         for j in range(1, 5):
             ax[i, j].imshow(labelmaps[:, :, i*4 + j-1])
-            ax[i, j].scatter(labelmap_joints[:, 0], labelmap_joints[:, 1], s=1, c='r')
+            ax[i, j].scatter(labelmap_joints[i*4+j-1, 0], labelmap_joints[i*4+j-1, 1], s=3, c='r')
 
     plt.show()
 

@@ -6,7 +6,7 @@ import cv2
 from dataset import MPII_dataset
 from eval_callback import EvalCallback
 from eval_utils import find_heatmap_joints
-from plot_utils import plot_predicted_joints
+from plot_utils import plot_predicted_joints, plot_labelmaps
 
 from tensorflow.python.keras.callbacks import CSVLogger
 from tensorflow.python.keras.models import load_model
@@ -95,10 +95,11 @@ class HourglassModel:
         generator = dataset.generate_batches(
             batch_size=self.batch_size,
             stacks_num=self.stacks_num,
+            metadata_flag=True
         )
 
         for input_batch in generator:
-            output_batch = self.model.predict(input_batch)
+            output_batch = self.model.predict(input_batch[0:2])
 
             final_heatmaps = output_batch[-1]
 
@@ -107,6 +108,15 @@ class HourglassModel:
 
                 import pdb
                 pdb.set_trace()
+
+
+
+                plot_labelmaps(
+                    original_image=input_batch[0][batch_index],
+                    original_joints=input_batch[2][batch_index]['obj_joints'],
+                    labelmaps=output_batch[-1][batch_index],
+                    labelmap_joints=predicted_joints
+                )
 
                 plot_predicted_joints(
                     image=input_batch[0][batch_index],

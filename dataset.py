@@ -73,9 +73,9 @@ class MPII_dataset:
 
                 input_image, output_labelmaps, metadata = self.process_image(
                     annotation=annotation,
-                    flip_flag=True,
-                    scale_flag=True,
-                    rotation_flag=True,
+                    flip_flag=False,
+                    scale_flag=False,
+                    rotation_flag=False,
                     metadata_flag=True
                 )
 
@@ -186,7 +186,7 @@ class MPII_dataset:
             return image, labelmaps, metadata
 
     def normalize(self, original_image):
-        original_image = np.divide(original_image, 255.0)
+        original_image = np.true_divide(original_image, 255.0)
 
         for i in range(original_image.shape[-1]):
             original_image[:, :, i] -= self.color_mean[i]
