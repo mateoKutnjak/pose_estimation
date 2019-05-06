@@ -58,7 +58,7 @@ def non_max_suppression(heatmap_layer, window_size=3, threshold=1e-6):
     under_threshold_indices = heatmap_layer < threshold
     heatmap_layer[under_threshold_indices] = 0
 
-    return heatmap_layer * (heatmap_layer == maximum_filter(heatmap_layer, size=(window_size, window_size)))
+    return heatmap_layer * (heatmap_layer == maximum_filter(heatmap_layer, footprint=np.ones((window_size, window_size))))
 
 def joints_distance(predicted_joint, labeled_joint, norm, threshold):
     if labeled_joint[0] > 1 and labeled_joint[1] > 1:

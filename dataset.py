@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import preprocessing
 from random import shuffle
+import plot_utils
 
 
 class MPII_dataset:
@@ -84,13 +85,14 @@ class MPII_dataset:
 
                 if batch_index == batch_size-1:
                     output_batch_total = []
-                    _metadatas = metadata.copy()
+                    # _metadatas = metadata.copy()
 
                     for _ in range(stacks_num):
                         output_batch_total.append(output_batch)
 
                     if metadata_flag:
                         yield input_batch, output_batch_total, metadatas
+                        metadatas = []
                     else:
                         yield input_batch, output_batch_total
 
@@ -132,7 +134,7 @@ class MPII_dataset:
                 angle=angle
             )
 
-        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
+        # plot_utils.plot_processed_image(image, obj_center, obj_joints, scale, angle)
 
         image, obj_center, obj_joints = preprocessing.crop(
             original_image=image,
@@ -141,7 +143,7 @@ class MPII_dataset:
             scale=scale
         )
 
-        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle)
+        # plot_utils.plot_processed_image(image, obj_center, obj_joints, scale, angle)
 
         image, obj_center, obj_joints = preprocessing.resize(
             original_image=image,
@@ -150,16 +152,16 @@ class MPII_dataset:
             shape=self.input_shape[:-1]
         )
 
-        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+        # plot_utils.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
 
         image = self.normalize(original_image=image)
 
-        # preprocessing.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+        # plot_utils.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
 
         labelmap_joints = preprocessing.scale_points(
             input_res=image.shape[:-1],
             output_res=self.output_shape[:-1],
-            points=obj_joints
+            points=obj_joints,
         )
 
         labelmaps = self.generate_labelmaps(
@@ -167,7 +169,7 @@ class MPII_dataset:
             obj_joints_visibilities=obj_joints_visibilities,
             sigma=self.sigma)
 
-        # preprocessing.plot_labelmaps(image, obj_joints, labelmaps, labelmap_joints)
+        # plot_utils.plot_labelmaps(image, obj_joints, labelmaps, labelmap_joints)
 
         metadata = {
             'obj_center': obj_center,
@@ -209,10 +211,10 @@ class MPII_dataset:
         return flipped_image, flipped_center, flipped_joints
 
     def generate_labelmaps(self, obj_joints, obj_joints_visibilities, sigma):
-        labelmaps = np.zeros(shape=(self.output_shape[0], self.output_shape[1], self.joints_num))
+        labelmaps = np.zeros(shape=(self.output_shape[0], self.output_shape[1], obj_joints.shape[0]))
 
         for i in range(len(obj_joints)):
-            if obj_joints_visibilities[i] > 0.0:
+            if obj_joints[i, 0] > 0 and obj_joints[i, 1] > 0 and obj_joints_visibilities[i] > 0.0:
                 labelmaps[:, :, i] = preprocessing.generate_labelmap(labelmaps[:, :, i], obj_joints[i], sigma)
 
         return labelmaps

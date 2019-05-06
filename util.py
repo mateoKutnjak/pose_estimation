@@ -23,17 +23,20 @@ def filter_annotations_for_images():
         f.write(json.dumps(result))
 
 def move_images_tu_subfolders():
-    image_filenames = [f for f in listdir('images') if isfile(join('images', f))]
+    image_filenames = [f for f in listdir('_images') if isfile(join('_images', f))]
 
     for image_filename in image_filenames:
 
         filename_search = re.search('(\d\d).jpg$', image_filename, re.IGNORECASE)
         number  = filename_search.group(1)
 
-        if not os.path.exists(os.path.join('images', '_' + str(number))):
-            os.makedirs(os.path.join('images', '_' + str(number)))
+        if not os.path.exists(os.path.join('_images', '_' + str(number))):
+            os.makedirs(os.path.join('_images', '_' + str(number)))
 
         shutil.move(
-            os.path.join('images', image_filename),
-            os.path.join('images', '_' + str(number), image_filename)
+            os.path.join('_images', image_filename),
+            os.path.join('_images', '_' + str(number), image_filename)
         )
+
+
+move_images_tu_subfolders()

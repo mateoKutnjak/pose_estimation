@@ -1,10 +1,12 @@
 import layers
 import math
 import os
-import datetime
+import cv2
 
 from dataset import MPII_dataset
 from eval_callback import EvalCallback
+from eval_utils import find_heatmap_joints
+from plot_utils import plot_predicted_joints
 
 from tensorflow.python.keras.callbacks import CSVLogger
 from tensorflow.python.keras.models import load_model
@@ -12,7 +14,7 @@ from tensorflow.python.keras.models import load_model
 
 class HourglassModel:
 
-    def __init__(self, images_dir, annotations_json_file, log_dir, batch_size, input_shape, output_shape, channels_num=256, classes_num=16, stacks_num=8):
+    def __init__(self, images_dir, annotations_json_file, log_dir, input_shape, output_shape, batch_size=8, channels_num=256, classes_num=16, stacks_num=8):
         self.images_dir = images_dir
         self.annotations_json_file = annotations_json_file
         self.log_dir = log_dir
@@ -77,6 +79,41 @@ class HourglassModel:
             epochs=epochs,
             callbacks=[checkpoint, logger]
         )
+
+    def load(self):
+        self.model = load_model(os.path.join(self.log_dir, 'model_architecture.h5'))
+        self.model.load_weights(os.path.join(self.log_dir, 'model_weights.h5'))
+
+        dataset = MPII_dataset(
+            images_dir=self.images_dir,
+            annots_json_filename=self.annotations_json_file,
+            input_shape=self.input_shape,
+            output_shape=self.output_shape,
+            type='train'
+        )
+
+        generator = dataset.generate_batches(
+            batch_size=self.batch_size,
+            stacks_num=self.stacks_num,
+        )
+
+        for input_batch in generator:
+            output_batch = self.model.predict(input_batch)
+
+            final_heatmaps = output_batch[-1]
+
+            for batch_index in range(self.batch_size):
+                predicted_joints = find_heatmap_joints(final_heatmaps[batch_index], threshold=0.5)
+
+                import pdb
+                pdb.set_trace()
+
+                plot_predicted_joints(
+                    image=input_batch[0][batch_index],
+                    obj_joints=predicted_joints,
+                    output_shape=self.output_shape
+                )
+
 
     def resume_train(self, epochs, checkpoint_epoch):
         self.model = load_model(os.path.join(self.log_dir, 'model_architecture.h5'))

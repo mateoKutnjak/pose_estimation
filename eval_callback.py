@@ -2,6 +2,7 @@ import os
 from tensorflow.python.keras.callbacks import Callback
 from dataset import MPII_dataset
 import eval_utils
+import plot_utils
 
 
 class EvalCallback(Callback):
@@ -15,6 +16,14 @@ class EvalCallback(Callback):
         self.input_shape = input_shape
         self.output_shape = output_shape
 
+    # def on_epoch_begin(self, epoch, logs=None):
+    #     print('Saving model architecture... ')
+    #     self.model.save(os.path.join(self.log_dir, "model_architecture.h5"))
+    #     print('DONE')
+    #
+    #     print('Saving model weights... ')
+    #     self.model.save_weights(os.path.join(self.log_dir, "model_weights.h5"))
+    #     print('DONE')
 
     def on_epoch_end(self, epoch, logs=None):
         if epoch == 0:
@@ -26,7 +35,7 @@ class EvalCallback(Callback):
         self.model.save_weights(os.path.join(self.log_dir, "model_weights.h5"))
         print('DONE')
 
-        accuracy = self.epoch_evaluation()
+        accuracy = self.epoch_evaluation(epoch)
 
         with open(os.path.join(self.log_dir, 'epoch_validations.txt'), 'a+') as f:
             f.write('Epoch ' + str(epoch) + ' with accuracy of ' + str(accuracy) + '\n')
@@ -35,7 +44,7 @@ class EvalCallback(Callback):
         print('DONE')
 
 
-    def epoch_evaluation(self):
+    def epoch_evaluation(self, epoch):
         mpii_valid_dataset = MPII_dataset(
             images_dir=self.images_dir,
             annots_json_filename=self.annotations_json_file,
@@ -59,9 +68,22 @@ class EvalCallback(Callback):
             if examples_count > mpii_valid_dataset.get_dataset_size():
                 break
 
-
-
             prediction_batch = self.model.predict(input_batch)
+
+            # if examples_count % (self.batch_size * 1) == 0: # TODO change
+            #     import pdb
+            #     pdb.set_trace()
+            #     final_heatmaps = prediction_batch[-1]
+            #
+            #     # for batch_index in range(self.batch_size):
+            #     predicted_joints = eval_utils.find_heatmap_joints(final_heatmaps[-1], threshold=0.5)
+            #
+            #     plot_utils.plot_predicted_joints(
+            #         image=input_batch[-1],
+            #         obj_joints=predicted_joints,
+            #         output_shape=self.output_shape,
+            #         save_filename=os.path.join(self.log_dir, str(epoch) + '_' + str(examples_count))
+            #     )
 
             corrects, incorrects = eval_utils.heatmap_batch_accuracy(
                 prediction_batch=prediction_batch[-1],

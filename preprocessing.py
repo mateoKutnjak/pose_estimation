@@ -1,31 +1,6 @@
 from scipy.ndimage import rotate as rot
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
-
-
-def plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=True):
-    plt.imshow(image)
-
-    plt.scatter(obj_center[0], obj_center[1], c='r')
-
-    if draw_bbox:
-        x0 = int(obj_center[0] - 200 * scale / 2)
-        y0 = int(obj_center[1] - 200 * scale / 2)
-        x1 = int(obj_center[0] + 200 * scale / 2)
-        y1 = int(obj_center[1] + 200 * scale / 2)
-
-        plt.plot([x0, x1], [y0, y0], c='b')
-        plt.plot([x0, x1], [y1, y1], c='b')
-        plt.plot([x0, x0], [y0, y1], c='b')
-        plt.plot([x1, x1], [y0, y1], c='b')
-
-    plt.title('Scale = {}\nAngle = {}'.format(scale, angle))
-
-    for joint in obj_joints:
-        plt.scatter(joint[0], joint[1], c='g')
-
-    plt.show()
 
 def rotate(original_image, obj_center, obj_joints, angle):
     rotated_image = rot(original_image, angle)
@@ -115,31 +90,22 @@ def generate_labelmap(image, point, sigma):
     image[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
     return image
 
-def plot_labelmaps(original_image, original_joints, labelmaps, labelmap_joints):
-    import pdb
-    pdb.set_trace()
-
-    fig, ax = plt.subplots(nrows=4, ncols=5)
-
-    ax[0, 0].imshow(original_image)
-    ax[0, 0].scatter(original_joints[:, 0], original_joints[:, 1])
-
-    for i in range(0, 4):
-        for j in range(1, 5):
-            ax[i, j].imshow(labelmaps[:, :, i*4 + j-1])
-            ax[i, j].scatter(labelmap_joints[:, 0], labelmap_joints[:, 1], s=1, c='r')
-
-    plt.show()
-
-def scale_points(input_res, output_res, points):
+def scale_points(input_res, output_res, points, remove_zero_rows=False):
     inres = np.array(list(input_res))
     outres = np.array(list(output_res))
 
     factor = np.divide(outres, inres)
+
     scaled_joints = np.multiply(points, factor)
 
-    return scaled_joints
+    if remove_zero_rows:
+        scaled_joints_no_zeros = []
+        for i in range(scaled_joints.shape[0]):
+            if scaled_joints[i, 0] > 0 and scaled_joints[i, 1] > 0:
+                scaled_joints_no_zeros.append(scaled_joints[i, 0:2])
+        return np.array(scaled_joints_no_zeros)
 
+    return scaled_joints
 
 def resize(original_image, obj_center, obj_joints, shape):
     resized_image = cv2.resize(original_image, shape)

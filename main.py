@@ -10,6 +10,7 @@ def main():
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--mode', type=str, default='train', help='mode (train/demo)')
     parser.add_argument('--batch_size', type=int, default=8, help='batch size for training')
     parser.add_argument('--num_stacks', type=int, default=2, help='number of hourglass modules')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
@@ -38,11 +39,14 @@ def main():
         output_shape=args.output_shape,
     )
 
-    if args.checkpoint_epoch is None:
-        hg_model.build()
-        hg_model.train(epochs=args.epochs)
-    else:
-        hg_model.resume_train(args.epochs, args.checkpoint_epoch)
+    if args.mode == 'train':
+        if args.checkpoint_epoch is None:
+            hg_model.build()
+            hg_model.train(epochs=args.epochs)
+        else:
+            hg_model.resume_train(args.epochs, args.checkpoint_epoch)
+    elif args.mode == 'demo':
+        hg_model.load()
 
 if __name__ == '__main__':
     main()
