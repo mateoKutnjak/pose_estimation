@@ -50,6 +50,8 @@ def crop(original_image, obj_center, obj_joints, scale):
     obj_joints[:, 0] -= orig_x0
     obj_joints[:, 1] -= orig_y0
 
+    obj_joints = obj_joints.clip(min=0)
+
     return original_image[y0:y1, x0:x1, :], obj_center, obj_joints
 
 def pad_image(img, x0, y0, x1, y1):
