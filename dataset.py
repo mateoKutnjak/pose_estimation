@@ -157,7 +157,7 @@ class MPII_dataset:
 
         image = self.normalize(original_image=image)
 
-        plot_utils.plot_processed_image(image, obj_joints, obj_center, scale, angle, draw_bbox=False)
+        # plot_utils.plot_processed_image(image, obj_joints, obj_center, scale, angle, draw_bbox=False)
 
         labelmap_joints = preprocessing.scale_points(
             input_res=image.shape[:-1],

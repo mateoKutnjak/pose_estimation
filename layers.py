@@ -35,9 +35,9 @@ def residual_module(input, channels_out, layer_name=''):
     else:
         skip = Conv2D(filters=channels_out, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_skip')(input)
 
-    x = Conv2D(filters=channels_out / 2, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_first')(input)
+    x = Conv2D(filters=channels_out // 2, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_first')(input)
     x = BatchNormalization()(x)
-    x = Conv2D(filters=channels_out / 2, kernel_size=(3, 3), padding='same', activation='relu', name=layer_name + '_conv_3x3_second')(x)
+    x = Conv2D(filters=channels_out // 2, kernel_size=(3, 3), padding='same', activation='relu', name=layer_name + '_conv_3x3_second')(x)
     x = BatchNormalization()(x)
     x = Conv2D(filters=channels_out, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_third')(x)
     x = BatchNormalization()(x)
@@ -64,7 +64,7 @@ def create_single_hourglass_module(input, classes, channels, layer_num):
     f3 = residual_module(x, channels, layer_name=layer_num + '_decreasing_layer_3')
     x = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(f3)
     f4 = residual_module(x, channels, layer_name=layer_num + '_decreasing_layer_4')
-    x = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(f4)
+    # x = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(f4)
 
     g1 = residual_module(f1, channels, layer_name=layer_num + '_side_layer_1')
     g2 = residual_module(f2, channels, layer_name=layer_num + '_side_layer_2')
@@ -75,7 +75,7 @@ def create_single_hourglass_module(input, classes, channels, layer_num):
     x = residual_module(x, channels, layer_name=layer_num + '_middle_layer_2')
     x = residual_module(x, channels, layer_name=layer_num + '_middle_layer_3')
 
-    x = UpSampling2D(size=(2, 2))(x)
+    # x = UpSampling2D(size=(2, 2))(x)
     x = Add(name='')([x, g4])
     x = residual_module(x, channels, layer_name=layer_num + '_increasing_layer_1')
     x = UpSampling2D(size=(2, 2))(x)
