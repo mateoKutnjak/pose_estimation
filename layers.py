@@ -24,7 +24,7 @@ def create_network(input_shape, batch_size, channels, classes, stacks=1):
 
     model = Model(inputs=_input, outputs=heatmaps)
     # TODO On keras github 5e-4
-    rms = RMSPropOptimizer(learning_rate=1e-2)
+    rms = RMSPropOptimizer(learning_rate=5e-3)
     model.compile(optimizer=rms, loss=mean_squared_error, metrics=["accuracy"])
 
     return model
