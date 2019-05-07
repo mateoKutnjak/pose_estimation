@@ -2,6 +2,7 @@ from tensorflow.python.keras.layers import *
 from tensorflow.python.keras.models import Model
 from tensorflow.python.training.rmsprop import RMSPropOptimizer
 from tensorflow.python.keras.losses import mean_squared_error
+import keras.backend as K
 
 
 def compile_model(model):
@@ -12,28 +13,31 @@ def compile_model(model):
 
 
 def create_network(input_shape, batch_size, channels, classes, stacks=1):
-    input = Input(shape=(input_shape[0], input_shape[1], 3,))
+    _input = Input(shape=(input_shape[0], input_shape[1], 3,))
 
-    curr_output = create_front_module(input, channels)
+    curr_output = create_front_module(_input, channels)
     heatmaps = []
 
     for i in range(stacks):
-        curr_output, heatmap = create_single_hourglass_module(curr_output, channels, classes, str(i))
+        curr_output, heatmap = create_single_hourglass_module(curr_output, classes, channels, str(i))
         heatmaps.append(heatmap)
 
-    model = Model(inputs=input, outputs=heatmaps)
+    model = Model(inputs=_input, outputs=heatmaps)
     # TODO On keras github 5e-4
-    rms = RMSPropOptimizer(learning_rate=2.5e-4)
+    rms = RMSPropOptimizer(learning_rate=5e-4)
     model.compile(optimizer=rms, loss=mean_squared_error, metrics=["accuracy"])
 
     return model
 
 def residual_module(input, channels_out, layer_name=''):
-    skip = Conv2D(filters=channels_out, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_skip')(input)
+    if K.int_shape(input)[-1] == channels_out:
+        skip = input
+    else:
+        skip = Conv2D(filters=channels_out, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_skip')(input)
 
-    x = Conv2D(filters=channels_out // 2, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_first')(input)
+    x = Conv2D(filters=channels_out / 2, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_first')(input)
     x = BatchNormalization()(x)
-    x = Conv2D(filters=channels_out // 2, kernel_size=(3, 3), padding='same', activation='relu', name=layer_name + '_conv_3x3_second')(x)
+    x = Conv2D(filters=channels_out / 2, kernel_size=(3, 3), padding='same', activation='relu', name=layer_name + '_conv_3x3_second')(x)
     x = BatchNormalization()(x)
     x = Conv2D(filters=channels_out, kernel_size=(1, 1), padding='same', activation='relu', name=layer_name + '_conv_1x1_third')(x)
     x = BatchNormalization()(x)
@@ -52,7 +56,7 @@ def create_front_module(input, channels_out):
 
     return x
 
-def create_single_hourglass_module(input, channels, classes, layer_num):
+def create_single_hourglass_module(input, classes, channels, layer_num):
     f1 = residual_module(input, channels, layer_name=layer_num + '_decreasing_layer_1')
     x = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(f1)
     f2 = residual_module(x, channels, layer_name=layer_num + '_decreasing_layer_2')

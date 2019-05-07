@@ -31,9 +31,7 @@ def plot_processed_image(image, obj_joints, obj_center=None, scale=1.0, angle=0.
         plt.plot([x1, x1], [y0, y1], c='b')
 
     plt.title('Scale = {}\nAngle = {}'.format(scale, angle))
-
-    for joint in obj_joints:
-        plt.scatter(joint[0], joint[1], c='g')
+    plt.scatter(obj_joints[:, 0], obj_joints[:, 1], c='g')
 
     plt.show()
 

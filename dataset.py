@@ -115,6 +115,7 @@ class MPII_dataset:
 
         # COMMENT To avoid joints cropping
         scale *= 1.25
+        angle = 0
 
         # TODO change values for probs
         if flip_flag and np.random.sample() > 0:
@@ -156,7 +157,7 @@ class MPII_dataset:
 
         image = self.normalize(original_image=image)
 
-        # plot_utils.plot_processed_image(image, obj_center, obj_joints, scale, angle, draw_bbox=False)
+        plot_utils.plot_processed_image(image, obj_joints, obj_center, scale, angle, draw_bbox=False)
 
         labelmap_joints = preprocessing.scale_points(
             input_res=image.shape[:-1],
