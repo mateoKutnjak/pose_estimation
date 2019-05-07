@@ -31,7 +31,7 @@ class EvalCallback(Callback):
             self.model.save(os.path.join(self.log_dir, "model_architecture.h5"))
             print('DONE')
 
-        if epoch % 50 == 0:
+        if epoch % 200 == 0:
 
             print('Saving model weights... ')
             self.model.save_weights(os.path.join(self.log_dir, "model_weights.h5"))
