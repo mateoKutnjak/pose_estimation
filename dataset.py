@@ -229,7 +229,7 @@ class MPII_dataset:
 
         # meta info
         metainfo = {'center': center, 'scale': scale,
-                    'pts': joints, 'tpts': transformedKps, 'name': image_filename}
+                    'pts': joints, 'obj_joints': transformedKps, 'name': image_filename}
 
         return cropimg, gtmap, metainfo
 
